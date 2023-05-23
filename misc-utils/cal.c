@@ -210,7 +210,7 @@ struct cal_request {
 struct cal_control {
 	const char *full_month[MONTHS_IN_YEAR];	/* month names */
 	const char *abbr_month[MONTHS_IN_YEAR];	/* abbreviated month names */
-	const char *weekdays[DAYS_IN_WEEK];     /* day names */
+	char *weekdays[DAYS_IN_WEEK];     /* day names */
 
 	int reform_year;		/* Gregorian reform year */
 	int colormode;			/* day and week number highlight */
@@ -670,8 +670,13 @@ static void weekdays_init(struct cal_control *ctl)
 	int i;
 
 	for (i = 0; i < DAYS_IN_WEEK; i++) {
+		char *x;
 		wd = (i + ctl->weekstart) % DAYS_IN_WEEK;
-		ctl->weekdays[i] = nl_langinfo(ABDAY_1 + wd);
+		x = nl_langinfo(ABDAY_1 + wd);
+		/* It's okay to alloc and not free; this is only ever done once. */
+		ctl->weekdays[i] = (char *)xcalloc(strlen(x) + 4, sizeof(char));
+		strcpy(ctl->weekdays[i], x);
+		strcat(ctl->weekdays[i], "\xe2\x80\x8e"); /* U+200E LEFT-TO-RIGHT MARK */
 	}
 }
 static void headers_init(struct cal_control *ctl)
